@@ -8,13 +8,14 @@ modifiable.
 # Running the code
 
 To run the code, just calls `(test)`. After that you can experiment 
-with the `ev` and `compile`
+with the `ev` and `compile` procedures.
 
 # Status
 
-Right now Scheme expressions are compiled to an IR that later 
+Right now Scheme expressions are compiled to an IR that is later 
 interpreted. With each function call there is an associated inline cache 
-that record at runtime which closure is called.
+that records at runtime which closure is called at this point.
 
 Missing are triggers that causes a closure to be recompiled and 
-optimized with the knowledge contained in the inline caches.
+optimized with the knowledge contained in the inline caches. The 
+optimizing compiler is also missing.
