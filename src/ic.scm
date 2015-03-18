@@ -94,6 +94,10 @@
               (set-mcdr! global value)
               (set! *global* (cons (cons name value) *global*)))))))
 
+(define (update-call-count! call)
+  (let ((count (cadddr call)))
+    (set-mcar! (cdddr call) (+ count 1))))
+
 (define (ev is env)
   (let lp ((stack '())
            (is is)
@@ -131,9 +135,14 @@
                        (let* ((args (closure-args op))
                               (n (length args))
                               (vals (take n (cdr stack)))
+                              (ic (caddr i))
                               (stack* (drop n (cdr stack))))
                          ;; Update the inline cache with the called procedure
-                         (update-ic! (caddr i) op)
+                         (update-ic! ic op)
+                         (let ((count (ic-count ic)))
+                           (if (= count 100)
+                               (optimize-closure op)
+                               #f))
                          (lp (cons (make-frame (cdr is) env) stack*)
                              (closure-code op)
                              (bind-env args vals (closure-env op))))
@@ -149,7 +158,7 @@
                 ((eq? (car i) '%-)
                  (let ((a (car stack)) (b (cadr stack)))
                    (lp (cons (- a b) (cddr stack)) (cdr is) env)))
-                ((eq? (caar i) '%<)
+                ((eq? (car i) '%<)
                  (let ((a (car stack)) (b (cadr stack)))
                    (lp (cons (< a b) (cddr stack)) (cdr is) env)))
                 (else (error "unknown instruction " i)))))))
@@ -170,14 +179,22 @@
 (define (closure-code c) (vector-ref c 2))
 (define (closure-env  c) (vector-ref c 3))
 
-(define (make-empty-ic) (vector 'ic #f))
+(define (make-empty-ic) (vector 'ic #f 0))
 (define (ic-value ic) (vector-ref ic 1))
-(define (update-ic! ic v) (vector-set! ic 1 v))
+(define (update-ic! ic v)
+  (vector-set! ic 1 v)
+  (vector-set! ic 2 (+ 1 (vector-ref ic 2))))
+(define (ic-count ic) (vector-ref ic 2))
 
 (define (make-frame code env) (vector 'frame code env))
 (define (frame? o) (and (vector? o) (eq? (vector-ref o 0) 'frame)))
 (define (frame-code f) (vector-ref f 1))
 (define (frame-env f) (vector-ref f 2))
+
+;;; optimizer
+
+(define (optimize-closure closure)
+  (display ";;; optimizing closure ") (display closure) (newline))
 
 ;;; Test
 
@@ -187,4 +204,7 @@
 
 (define (test)
   (ev (compile '(set! + (lambda (a b) (%+ a b)))) '())
-  (print (ev (compile '(+ 1 2)) '())))
+  (ev (compile '(set! fib (lambda (n) (if (%< n 2) n (%+ (fib (%- n 1)) (fib (%- n 2))))))) '())
+  ;(print (ev (compile '(+ 1 2)) '()))
+  (print (ev (compile '(fib 10)) '()))
+  (print (ev (compile '(fib 20)) '())))

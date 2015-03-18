@@ -7,8 +7,11 @@ modifiable.
 
 # Running the code
 
-To run the code, just calls `(test)`. After that you can experiment 
-with the `ev` and `compile` procedures.
+To run the code, just calls `(test)`. It sould compute the 10th and 20th 
+fibonacci number. A message should also appear indicating that the 
+interpreter wants to optimize a the `fib` function. 
+
+After that you can experiment with the `ev` and `compile` procedures.
 
 # Status
 
@@ -16,6 +19,5 @@ Right now Scheme expressions are compiled to an IR that is later
 interpreted. With each function call there is an associated inline cache 
 that records at runtime which closure is called at this point.
 
-Missing are triggers that causes a closure to be recompiled and 
-optimized with the knowledge contained in the inline caches. The 
-optimizing compiler is also missing.
+Currently it is missing an optimizing compiler that produces
+optimized code with the knowledge contained in the inline caches.
